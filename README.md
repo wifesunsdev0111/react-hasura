@@ -1,6 +1,6 @@
-## react-check-auth
+## hasura-react
 
-`react-check-auth` is a tiny react component that helps you make auth checks declarative in your react or react-native app.
+`hasura-react` is a tiny react component that helps you make auth checks declarative in your react or react-native app.
 
 This component uses [React 16's new context API](https://reactjs.org/docs/context.html) and is just ~100 LOC. It can also serve as a boilerplate for getting familiar with using the context API to pass information from a parent component to arbitrarily deep child components.
 
@@ -10,12 +10,12 @@ In a typical app UI, depending on whether the user logs in, components in the ap
 
 For example, a "welcome user" label or a "login button" on a header. Or using this information with routing, `/home` should redirect to `/login` if the user is not logged in, and `/login` should redirect to `/home` if the user is logged in.
 
-### Before `react-check-auth`
+### Before `hasura-react`
 
 1. On load, your app must make a request to some kind of a `/verifyUser` or a `/fetchUser` endpoint to check if the existing persisted token/cookie is available and valid.
 2. You need to store that information in app state and pass it as a prop all through your component tree just so that that child components can access it or use `redux` to store the state and `connect()` the consuming component.
 
-### After `react-check-auth`
+### After `hasura-react`
 
 1. You specify the `authUrl` endpoint as a prop to a wrapper component called `<AuthProvider`.
 2. You access logged-in information by wrapping your react component/element in `<AuthConsumer>` that has the latest props.
@@ -32,11 +32,11 @@ Wrap your react app in a `AuthProvider` component that has an endpoint to fetch 
 import React from "react";
 import ReactDOM from "react-dom";
 
-import {AuthProvider} from "react-check-auth";
-import {Header, Main} from "./components";
+import { AuthProvider } from "hasura-react";
+import { Header, Main } from "./components";
 
 const App = () => (
-  <AuthProvider authUrl={'https://website.com/get/userInfo'}>
+  <AuthProvider authUrl={"https://website.com/get/userInfo"}>
     <div>
       // The rest of your react app goes here
       <Header />
@@ -52,30 +52,31 @@ ReactDOM.render(<App />, document.getElementById("root"));
 
 Now, in any arbitrary component, like a Header, you can check if the user is currently logged in. Typically you would use this for either showing a "welcome" label or a login button.
 
-``` javascript
-  import {AuthConsumer} from 'react-check-auth';
+```javascript
+import { AuthConsumer } from "hasura-react";
 
-  const Header = () => (
-    <div>      
-      // Use the AuthConsumer component to check 
-      // if userInfo is available
-      <AuthConsumer> 
-        {({userInfo, isLoading, error}) => ( 
-          userInfo ?
-            (<span>Hi {userInfo.username}</span>) :
-            (<a href="/login">Login</a>)
-        )}
-       </AuthConsumer>
-    </div>
-  );
+const Header = () => (
+  <div>
+    // Use the AuthConsumer component to check // if userInfo is available
+    <AuthConsumer>
+      {({ userInfo, isLoading, error }) =>
+        userInfo ? (
+          <span>Hi {userInfo.username}</span>
+        ) : (
+          <a href="/login">Login</a>
+        )
+      }
+    </AuthConsumer>
+  </div>
+);
 ```
 
 ### 3) Redirect not-logged in users to /login
 
-You can mix and match `react-check-auth` with other declarative components like routing:
+You can mix and match `hasura-react` with other declarative components like routing:
 
-``` javascript
-  import {AuthConsumer} from 'react-check-auth';
+```javascript
+  import {AuthConsumer} from 'hasura-react';
 
   const Main = () => (
     <Router>
@@ -83,7 +84,7 @@ You can mix and match `react-check-auth` with other declarative components like 
       <Route path ='/login' component={Login} />
     </Router>
    );
-   
+
    const Home = () => {
      return (
        <AuthConsumer>
@@ -92,8 +93,8 @@ You can mix and match `react-check-auth` with other declarative components like 
            // Redirect the user to login if they are not logged in
            if (!userInfo) {
               return (<Redirect to='/login' />);
-           } 
-           
+           }
+
            // Otherwise render the normal component
            else {
              return (<div>Welcome Home!</div>);
@@ -105,18 +106,18 @@ You can mix and match `react-check-auth` with other declarative components like 
 );
 ```
 
-
 ## Usage guide
 
 ### I. Backend requirements
 
-These are the backend requirements that are assumed by `react-check-auth`.
+These are the backend requirements that are assumed by `hasura-react`.
 
 #### 1) API endpoint to return user information
 
 An API request to fetch user information. It should take a cookie, or a header or a body for current session information.
 
 For example:
+
 ```http
 GET https://my-backend.com/api/user
 Content-Type: application/json
@@ -129,6 +130,7 @@ Authorization: Bearer <...>
 If the user is logged in, the API should return a `200` status code with a `JSON` object.
 
 For example:
+
 ```json
 {
   "username": "iamuser",
@@ -141,14 +143,15 @@ For example:
 If the user is not logged-in, the API should return a **non `200`** status code:
 
 For example:
+
 ```http
 Status: 403
 ```
 
 ### II. Installation
 
-``` bash
-$ npm install --save react-check-auth
+```bash
+$ npm install --save hasura-react
 ```
 
 ### III. Set up `AuthProvider`
@@ -158,81 +161,86 @@ The `AuthProvider` component should be at the top of the component tree so that 
 The `AuthProvider` takes a required prop called `authUrl` and an optional prop called `reqOptions`.
 
 ```javascript
-<AuthProvider authUrl="https://my-backend.com/api/user" reqOptions={requestOptionsObject} />
+<AuthProvider
+  authUrl="https://my-backend.com/api/user"
+  reqOptions={requestOptionsObject}
+/>
 ```
 
 ##### `authUrl` :: String
+
 Should be a valid HTTP endpoint. Can be an HTTP endpoint of any method.
 
-
 ##### `reqOptions` :: Object || Function
+
 Should be or return a valid `fetch` options object as per https://github.github.io/fetch/#options.
 
 **Note: This is an optional prop that does not need to be specified if your `authUrl` endpoint is a GET endpoint that accepts cookies.**
 
 Default value that ensures cookies get sent to a `GET` endpoint:
+
 ```json
-{ 
+{
   "method": "GET",
   "credentials": "include",
   "headers": {
     "Content-Type": "application/json"
-  },  
+  }
 }
 ```
 
 #### Example 1: Use a GET endpoint with cookies
 
-``` javascript
-  import React from 'react';
-  import {AuthProvider} from 'react-check-auth';
+```javascript
+import React from "react";
+import { AuthProvider } from "hasura-react";
 
-  const authUrl = "https://my-backend.com/verifyAuth";
-  
-  const App = () => (
-    <AuthProvider authUrl={authUrl}>
-      // The rest of your app goes here
-    </AuthProvider>
-  );
+const authUrl = "https://my-backend.com/verifyAuth";
+
+const App = () => (
+  <AuthProvider authUrl={authUrl}>
+    // The rest of your app goes here
+  </AuthProvider>
+);
 ```
 
 #### Example 2: Use a GET endpoint with a header
 
-``` javascript
-  import React from 'react';
-  import {AuthProvider} from 'react-check-auth';
+```javascript
+import React from "react";
+import { AuthProvider } from "hasura-react";
 
-  const authUrl = "https://my-backend.com/verifyAuth";
-  const reqOptions = { 
-    'method': 'GET',
-    'headers': {
-      'Content-Type': 'application/json',
-      'Authorization' : 'Bearer ' + window.localStorage.myAuthToken
-    },  
-  }; 
-  
-  const App = () => (
-    <AuthProvider authUrl={authUrl} reqOptions={reqOptions}>
-      // The rest of your app goes here
-    </AuthProvider>
-  );
+const authUrl = "https://my-backend.com/verifyAuth";
+const reqOptions = {
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: "Bearer " + window.localStorage.myAuthToken,
+  },
+};
+
+const App = () => (
+  <AuthProvider authUrl={authUrl} reqOptions={reqOptions}>
+    // The rest of your app goes here
+  </AuthProvider>
+);
 ```
 
 #### Example 3: Use a POST endpoint with updated token
 
-``` javascript
+```javascript
   import React from 'react';
-  import {AuthProvider} from 'react-check-auth';
+  import {AuthProvider} from 'hasura-react';
 
   const authUrl = "https://my-backend.com/verifyAuth";
-  const reqOptions = () => { 
+  const reqOptions = () => {
     'method': 'POST',
     'headers': {
       'Content-Type': 'application/json',
       'Authorization' : 'Bearer ' + window.localStorage.myAuthToken
-    },  
-  }; 
-  
+    },
+  };
+
   const App = () => (
     <AuthProvider authUrl={authUrl} reqOptions={reqOptions}>
       // The rest of your app goes here
@@ -245,10 +253,11 @@ Default value that ensures cookies get sent to a `GET` endpoint:
 Any react component or element can be wrapped with an `<AuthConsumer>` to consume the latest contextValue. You must write your react code inside a function that accepts the latest contextValue. Whenver the contextValue is updated then the AuthComponent is automatically re-rendered.
 
 For example,
+
 ```javascript
 <AuthConsumer>
   {(props) => {
-    
+
     props.userInfo = {..}        // <request-object> returned by the API
     props.isLoading = true/false // if the API has not returned yet
     props.error = {..}           // <error-object> if the API returned a non-200 or the API call failed
@@ -266,17 +275,16 @@ If the API call returned a non-200 meaning that the current session is absent or
 
 If the API call has not returned yet, `isLoading: true`. If the API call has not been made yet, or has completed then `isLoading: false`.
 
-
 ##### `props.error` :: JSON
 
 If the API call returned a non-200 or there was an error in making the API call itself, `error` contains the parsed JSON value.
-
 
 ### V. Refresh state (eg: logout)
 
 If you implement a logout action in your app, the auth state needs to be updated. All you need to do is call the `refreshAuth()` function available as an argument in the renderProp function of the `AuthConsumer` component.
 
 For example:
+
 ```javascript
 
 <AuthConsumer>
@@ -289,7 +297,7 @@ For example:
     }}>
       Logout
     </button>
-</AuthConsumer>  
+</AuthConsumer>
 ```
 
 This will re-run the call to `authUrl` and update all the child components accordingly.
@@ -298,38 +306,35 @@ This will re-run the call to `authUrl` and update all the child components accor
 
 Usage with React Native is exactly the same as with React. However you would typically use a Authorization header instead of cookies. Here's a quick example:
 
-``` javascript
-
-import { AuthProvider, AuthConsumer } from 'react-vksci123';
+```javascript
+import { AuthProvider, AuthConsumer } from "react-vksci123";
 
 export default class App extends Component<Props> {
   render() {
     const sessionToken = AsyncStorage.getItem("@mytokenkey");
     const reqOptions = {
-      "method": "GET",
-      "headers": sessionToken ? { "Authorization" : `Bearer ${sessionToken}` } : {}
-    }
+      method: "GET",
+      headers: sessionToken ? { Authorization: `Bearer ${sessionToken}` } : {},
+    };
     return (
       <AuthProvider
         authUrl={`https://my-backend.com/api/user`}
         reqOptions={reqOptions}
       >
         <View style={styles.container}>
-          <Text style={styles.welcome}>
-            Welcome to React Native!
-          </Text>
+          <Text style={styles.welcome}>Welcome to React Native!</Text>
           <AuthConsumer>
-            {({isLoading, userInfo, error}) => {
+            {({ isLoading, userInfo, error }) => {
               if (isLoading) {
-                return (<ActivityIndicator />);
+                return <ActivityIndicator />;
               }
               if (error) {
-                return (<Text> Unexpected </Text>);
+                return <Text> Unexpected </Text>;
               }
               if (!userInfo) {
-                return (<LoginComponent />);
+                return <LoginComponent />;
               }
-              return (<HomeComponent />);
+              return <HomeComponent />;
             }}
           </AuthConsumer>
         </View>
@@ -337,7 +342,6 @@ export default class App extends Component<Props> {
     );
   }
 }
-
 ```
 
 ## Plug-n-play with existing auth providers
@@ -346,20 +350,20 @@ All Auth backend providers provide an endpoint to verify a "session" and fetch u
 
 ### Hasura
 
-Hasura's Auth API can be integrated with this module with a simple auth get endpoint  and can also be used to redirect the user to Hasura's Auth UI Kit in case the user is not logged in.
+Hasura's Auth API can be integrated with this module with a simple auth get endpoint and can also be used to redirect the user to Hasura's Auth UI Kit in case the user is not logged in.
 
 ```javascript
-  // replace CLUSTER_NAME with your Hasura cluster name.
-  const authEndpoint = 'https://auth.CLUSTER_NAME.hasura-app.io/v1/user/info';
+// replace CLUSTER_NAME with your Hasura cluster name.
+const authEndpoint = "https://auth.CLUSTER_NAME.hasura-app.io/v1/user/info";
 
-  // pass the above reqObject to CheckAuth
-  <AuthProvider authUrl={authEndpoint}>
-    <AuthConsumer>
-    { ({ isLoading, userInfo, error }) => { 
+// pass the above reqObject to CheckAuth
+<AuthProvider authUrl={authEndpoint}>
+  <AuthConsumer>
+    {({ isLoading, userInfo, error }) => {
       // your implementation here
-    } }
-    </AuthConsumer>
-  </AuthProvider>
+    }}
+  </AuthConsumer>
+</AuthProvider>;
 ```
 
 Read the docs here.
@@ -369,18 +373,23 @@ Read the docs here.
 `CheckAuth` can be integrated with Firebase APIs.
 
 ```javascript
-  // replace API_KEY with your Firebase API Key and ID_TOKEN appropriately.
-  const authUrl = 'https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=[API_KEY]';
-  const reqObject = { 'method': 'POST', 'payload': {'idToken': '[ID_TOKEN]'}, 'headers': {'content-type': 'application/json'}};
+// replace API_KEY with your Firebase API Key and ID_TOKEN appropriately.
+const authUrl =
+  "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=[API_KEY]";
+const reqObject = {
+  method: "POST",
+  payload: { idToken: "[ID_TOKEN]" },
+  headers: { "content-type": "application/json" },
+};
 
-  // pass the above reqObject to CheckAuth
-  <AuthProvider authUrl={authUrl} reqObject={reqObject}>
-    <AuthConsumer>
-    { ({ isLoading, userInfo, error }) => { 
+// pass the above reqObject to CheckAuth
+<AuthProvider authUrl={authUrl} reqObject={reqObject}>
+  <AuthConsumer>
+    {({ isLoading, userInfo, error }) => {
       // your implementation here
-    } }
-    </AuthConsumer>
-  </AuthProvider>
+    }}
+  </AuthConsumer>
+</AuthProvider>;
 ```
 
 ### Custom Provider
@@ -390,33 +399,28 @@ Read the docs here.
 Lets assume we have an endpoint on the backend `/api/check_token` which reads a header `x-access-token` from the request and provides with the associated user information
 
 ```javascript
-  const authEndpoint = 'http://localhost:8080/api/check_token';
-  const reqOptions = { 
-    'method': 'GET',
-    'headers': {
-      'Content-Type': 'application/json',
-      'x-access-token': 'jwt_token'
-    }
-  };
+const authEndpoint = "http://localhost:8080/api/check_token";
+const reqOptions = {
+  method: "GET",
+  headers: {
+    "Content-Type": "application/json",
+    "x-access-token": "jwt_token",
+  },
+};
 
-  <AuthProvider authUrl = { authEndpoint } reqOptions={ reqOptions }>
-    <AuthConsumer>
-      { ( { isLoading, userInfo, error, refreshAuth }) => {
-        if ( !userInfo ) {
-          return (
-            <span>Please login</span>
-          );
-        }
-        return (
-          <span>Hello { userInfo ? userInfo.username.name : '' }</span>
-        );
-      }}
-    </AuthConsumer>
-  </AuthProvider>
+<AuthProvider authUrl={authEndpoint} reqOptions={reqOptions}>
+  <AuthConsumer>
+    {({ isLoading, userInfo, error, refreshAuth }) => {
+      if (!userInfo) {
+        return <span>Please login</span>;
+      }
+      return <span>Hello {userInfo ? userInfo.username.name : ""}</span>;
+    }}
+  </AuthConsumer>
+</AuthProvider>;
 ```
 
 It will render as `<span>Please login</span>` if the user's token is invalid and if the token is a valid one it will render <span>Hello username</span>
-
 
 ## How it works
 
@@ -424,6 +428,7 @@ It will render as `<span>Please login</span>` if the user's token is invalid and
 
 1. The `AuthProvider` component uses the `authUrl` and `reqOptions` information given to it to make an API call
 2. While the API call is being made, it sets the context value to have `isLoading` to `true`.
+
 ```json
 {
   "userInfo": null,
@@ -431,8 +436,10 @@ It will render as `<span>Please login</span>` if the user's token is invalid and
   "error": null
 }
 ```
+
 3. Once the API call returns, in the context value `isLoading` is set to `false' and:
 4. Once the API call returns, if the user is logged in, the AuthProvider sets the context to `userInfo: <response-object>`
+
 ```json
 {
   "userInfo": <response-object>,
@@ -440,7 +447,9 @@ It will render as `<span>Please login</span>` if the user's token is invalid and
   "error": null
 }
 ```
+
 5. If the user is not logged in, in the context value, `userInfo` is set to `null` and `error` is set to the error response sent by the API, if the error is in JSON.
+
 ```json
 {
   "userInfo": null,
@@ -448,6 +457,7 @@ It will render as `<span>Please login</span>` if the user's token is invalid and
   "error": <error-response>
 }
 ```
+
 6. If the API call fails for some other reason, `error` contains the information
 
 ```json
@@ -457,6 +467,7 @@ It will render as `<span>Please login</span>` if the user's token is invalid and
   "error": <error-response>
 }
 ```
+
 7. Whenever the contextValue is updated, any component that is wrapped with `AuthConsumer` will be re-rendered with the contextValue passed to it as an argument in the renderProp function:
 
 ```javascript
@@ -471,9 +482,9 @@ It will render as `<span>Please login</span>` if the user's token is invalid and
 
 Clone repo
 
-````
-git clone https://github.com/hasura/react-check-auth.git
-````
+```
+git clone https://github.com/hasura/hasura-react.git
+```
 
 Install dependencies
 
@@ -489,7 +500,7 @@ Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
 
 #### Source code
 
-The source code for the react components are located inside `src/lib`.  
+The source code for the react components are located inside `src/lib`.
 
 #### Demo app
 
@@ -507,5 +518,5 @@ Produces production version of library under the `build` folder.
 
 ## Maintainers
 
-This project has come out of the work at [hasura.io](https://hasura.io). 
-Current maintainers [@Praveen](https://twitter.com/praveenweb), [@Karthik](https://twitter.com/k_rthik1991), [@Rishi](https://twitter.com/_rishichandra). 
+This project has come out of the work at [hasura.io](https://hasura.io).
+Current maintainers [@Praveen](https://twitter.com/praveenweb), [@Karthik](https://twitter.com/k_rthik1991), [@Rishi](https://twitter.com/_rishichandra).
